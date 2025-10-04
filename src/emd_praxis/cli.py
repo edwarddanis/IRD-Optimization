@@ -14,6 +14,10 @@ from emd_praxis.validation import (
     validate_generate_params, validate_ml_params, validate_optimize_config,
     validate_analyzed_dataframe, validate_dataframe_columns
 )
+from emd_praxis.visualization import (
+    plot_calibration_curve, plot_feature_importances,
+    plot_portfolio_distribution, plot_risk_vs_return
+)
 
 # Configure logging
 logging.basicConfig(
@@ -129,6 +133,23 @@ def cmd_analyze(args):
             logger.error(f"Failed to save model: {e}")
             sys.exit(1)
 
+    # Generate visualizations if requested
+    if hasattr(args, 'plot_calibration') and args.plot_calibration:
+        try:
+            plot_calibration_curve(res.calibration_curve, output_path=args.plot_calibration)
+            logger.info(f"Calibration curve saved to {args.plot_calibration}")
+        except Exception as e:
+            logger.error(f"Failed to generate calibration plot: {e}")
+            sys.exit(1)
+
+    if hasattr(args, 'plot_importance') and args.plot_importance:
+        try:
+            plot_feature_importances(res.feature_importances, output_path=args.plot_importance)
+            logger.info(f"Feature importance plot saved to {args.plot_importance}")
+        except Exception as e:
+            logger.error(f"Failed to generate feature importance plot: {e}")
+            sys.exit(1)
+
     report = {
         "auc": res.auc,
         "acc": res.acc,
@@ -209,6 +230,23 @@ def cmd_optimize(args):
     except Exception as e:
         logger.error(f"Unexpected error writing output: {e}")
         sys.exit(1)
+
+    # Generate visualizations if requested
+    if hasattr(args, 'plot_portfolio') and args.plot_portfolio:
+        try:
+            plot_portfolio_distribution(res, output_path=args.plot_portfolio)
+            logger.info(f"Portfolio distribution plot saved to {args.plot_portfolio}")
+        except Exception as e:
+            logger.error(f"Failed to generate portfolio plot: {e}")
+            sys.exit(1)
+
+    if hasattr(args, 'plot_risk_return') and args.plot_risk_return:
+        try:
+            plot_risk_vs_return(res["recommendations"], output_path=args.plot_risk_return)
+            logger.info(f"Risk vs return plot saved to {args.plot_risk_return}")
+        except Exception as e:
+            logger.error(f"Failed to generate risk-return plot: {e}")
+            sys.exit(1)
 
 def load_config(config_path: str) -> dict:
     """
@@ -327,6 +365,20 @@ def main():
         help="Optional path to save the trained model (e.g., models/predictor.joblib). "
              "If not provided, model will not be saved."
     )
+    p2.add_argument(
+        "--plot-calibration",
+        type=str,
+        default=None,
+        help="Optional path to save calibration curve plot (e.g., plots/calibration.png). "
+             "Visualizes model calibration quality."
+    )
+    p2.add_argument(
+        "--plot-importance",
+        type=str,
+        default=None,
+        help="Optional path to save feature importance plot (e.g., plots/importance.png). "
+             "Shows which features most influence predictions."
+    )
     p2.set_defaults(func=cmd_analyze)
 
     p3 = sub.add_parser("optimize", help="Optimize portfolio under constraints")
@@ -419,6 +471,20 @@ def main():
         type=str,
         default="results/opt_result.json",
         help="Output JSON file path for optimization results (default: results/opt_result.json)."
+    )
+    p3.add_argument(
+        "--plot-portfolio",
+        type=str,
+        default=None,
+        help="Optional path to save portfolio distribution plot (e.g., plots/portfolio.png). "
+             "Visualizes budget allocation, project counts, tech areas, and risk levels."
+    )
+    p3.add_argument(
+        "--plot-risk-return",
+        type=str,
+        default=None,
+        help="Optional path to save risk vs return scatter plot (e.g., plots/risk_return.png). "
+             "Shows relationship between success probability and expected value."
     )
     p3.set_defaults(func=cmd_optimize)
 

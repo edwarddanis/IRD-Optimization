@@ -19,6 +19,12 @@ from emd_praxis.validation import (
     validate_optimize_config,
     validate_analyzed_dataframe,
 )
+from emd_praxis.visualization import (
+    plot_calibration_curve,
+    plot_feature_importances,
+    plot_portfolio_distribution,
+    plot_risk_vs_return,
+)
 
 __all__ = [
     "__version__",
@@ -35,4 +41,8 @@ __all__ = [
     "validate_budget",
     "validate_optimize_config",
     "validate_analyzed_dataframe",
+    "plot_calibration_curve",
+    "plot_feature_importances",
+    "plot_portfolio_distribution",
+    "plot_risk_vs_return",
 ]
