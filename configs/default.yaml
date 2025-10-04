@@ -1,0 +1,32 @@
+# Default experiment configuration
+seed: 42
+
+data:
+  n_projects: 1000
+  out_csv: "data/projects.csv"
+
+ml:
+  model: "GradientBoostingClassifier"
+  n_estimators: 200
+  learning_rate: 0.05
+  max_depth: 3
+  cv_folds: 5
+  test_size: 0.2
+
+optimize:
+  total_budget: 100000000    # $100M
+  horizon_pct:
+    h1: 0.40
+    h2: 0.50
+    h3: 0.10
+  risk_limits:
+    h1_max_failure: 0.10
+    h2_max_failure: 0.50
+    h3_max_failure: 1.00
+  # competition/market weights for expected value:
+  weights:
+    strategic: 0.70
+    financial: 0.30
+  scenarios:
+    n: 100
+    budget_volatility: 0.20
