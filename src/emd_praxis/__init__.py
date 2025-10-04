@@ -10,7 +10,9 @@ __author__ = "Edward Danis"
 
 # Expose key classes and functions at package level
 from emd_praxis.data.synthetic_generator import generate_dataset
-from emd_praxis.ml.model import train_and_eval, batch_annotate, MLResult
+from emd_praxis.ml.model import (
+    train_and_eval, batch_annotate, MLResult, save_model, load_model, generate_calibration_data
+)
 from emd_praxis.optimize.portfolio import OptimizeConfig, greedy_knapsack
 from emd_praxis.validation import (
     validate_budget,
@@ -25,6 +27,9 @@ __all__ = [
     "train_and_eval",
     "batch_annotate",
     "MLResult",
+    "save_model",
+    "load_model",
+    "generate_calibration_data",
     "OptimizeConfig",
     "greedy_knapsack",
     "validate_budget",

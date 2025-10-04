@@ -8,6 +8,13 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
+# Portfolio optimization constants
+TRL_VALUE_PER_LEVEL = 1_000_000.0  # Base value per TRL advancement ($)
+EPSILON = 1e-9  # Small constant to prevent division by zero
+MARKET_POTENTIAL_MAX = 4.0  # Maximum market potential rating
+BUDGET_MULTIPLIER_MIN = 0.6  # Minimum budget scenario multiplier
+BUDGET_MULTIPLIER_MAX = 1.4  # Maximum budget scenario multiplier
+
 @dataclass
 class OptimizeConfig:
     total_budget: float
@@ -101,16 +108,18 @@ def expected_pcv(row: pd.Series, *, rng: np.random.Generator, cfg: OptimizeConfi
     Expected PCV: $2,737,500
     """
     # Base value: $1M per TRL advancement
-    base_value = (row["target_trl"] - row["initial_trl"]) * 1_000_000.0
+    base_value = (row["target_trl"] - row["initial_trl"]) * TRL_VALUE_PER_LEVEL
 
     # Strategic component: market potential normalized to [0, 1]
-    strategic = float(row.get("market_potential", 2)) / 4.0
+    strategic = float(row.get("market_potential", 2)) / MARKET_POTENTIAL_MAX
 
     # Financial component: ML-predicted success probability
     success = float(row.get("predicted_success_probability", 0.5))
 
     # Monte Carlo simulation: sample budget/market multipliers
-    mults = rng.normal(1.0, cfg.budget_volatility, size=cfg.scenarios_n).clip(0.6, 1.4)
+    mults = rng.normal(1.0, cfg.budget_volatility, size=cfg.scenarios_n).clip(
+        BUDGET_MULTIPLIER_MIN, BUDGET_MULTIPLIER_MAX
+    )
 
     # Expected value: weighted combination with scenario averaging
     expected = base_value * (
@@ -228,11 +237,10 @@ def greedy_knapsack(df: pd.DataFrame, cfg: OptimizeConfig) -> Dict[str, float]:
     df["expected_pcv"] = df.apply(lambda r: expected_pcv(r, rng=rng, cfg=cfg), axis=1)
 
     # Step 2: Calculate efficiency score (value per dollar)
-    eps = 1e-9  # Prevent division by zero
     df["score"] = (
         cfg.score_weights["pcv"] * df["expected_pcv"] +
         cfg.score_weights["success_prob"] * df["predicted_success_probability"]
-    ) / (df["budget_musd"] * 1_000_000 + eps)
+    ) / (df["budget_musd"] * 1_000_000 + EPSILON)
 
     # Step 3: Sort by efficiency (highest first)
     df = df.sort_values("score", ascending=False).reset_index(drop=True)
